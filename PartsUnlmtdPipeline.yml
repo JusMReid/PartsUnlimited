@@ -1,0 +1,85 @@
+---
+#Dev completes work in feature branch
+#Dev merges work into dev Branch
+#CI Instance: 
+#   Pulls latest version of code from repo & Builds - Stage 1
+#     ^We need to execute any DB Migration before we run our tests
+#     Executes Integration & feature tests    - Stage 2
+#       If build successful, deploy to dev env - Stage 3
+#         Manual review of changes in dev env (PR)
+#          ^(Dev Branch to be created)
+#           If PR accepted, dev merges changes from dev branch to main
+#             CI instance detects merge to main, then:   - Stage 4
+#              Pulls latest version of code. Builds..
+#               Executes feature tests
+#                 If successful, deploy to staging  - Stage 5
+
+#
+#
+#
+name:PartsUnlmtd_Pipeline_$(Date:yyyyMMdd) #TFund_Pipeline_$(Date:yyyyMMdd)
+
+#I think now instead of starting with dev_branch it was suggest that we start with something like Justin_Branch then changes from Justin_Branch get pushed into dev_Branch
+trigger:  #This file is triggered on a dev's addition to dev_branch
+  branches:
+    include:
+    - master
+    #Any other branch we may want to include on trigger - i.e, Nick_Branch, Jesse_Branch, Will_Branch, etc
+
+variables:
+  #Azure Resource Manager connection created during pipeline creation
+  #azureSubscription: '...'
+
+  #devWebAppName: 'TFund-dev'
+  #prodWebAppName: 'TFund'
+
+  #Agent VM Image Name
+  vmImageName: 'windows-latest'
+
+  #Filepaths/ProjectNames
+  Solution: '**/*.sln'
+  BuildProject: '**/*.csproj' #Should be path to TFund proj
+  UnitTests: '**/*test/*UnitTests/*.csproj' #**/TF32BJ.Training.Integration.Tests/*.csproj
+
+  #misc?
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+#pool: 
+#  'windows-latest'
+
+stages:
+  #Stage 1
+  - stage: Build
+    jobs: 
+      - job:  Build
+        pool: 
+          vmImage: $(vmImageName) #'windows-latest'
+          name: Default
+        workspace:  
+          clean: outputs
+        steps:
+          - displayName: Building Solution; Triggered By Push To feature branch...
+          - task: VsBuild1@1
+            inputs: 
+              solution: $(Solution)
+              msBuildArgs: #'/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${build.artifactstagingdirectory)\\"'
+              platform: 'any cpu'
+              configuration:  'release'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathToPublish: '$(Build.ArtifactStagingDirectory)' #Declare this variable above
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+  # Stage 1.5 - Execute any DB migration before running Stage 2-Tests
+
+  # Stage 2 (Todo: Consider if it would be better to make this another job within Stage 1)
+  - stage: UnitTests 
+    name: UnitTests
+    jobs:
+      - task: RunUnitTests
+        inputs:
+          command: test
+          projects: $(UnitTests)
+          arguments: '--configuration $(buildConfiguration)'
+      #Run Unit & Integration Tests. This becomes Feature tests during stage > main Pipeline build
