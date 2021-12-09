@@ -40,19 +40,19 @@ stages:
         workspace:  
           clean: outputs
         steps:
-          displayName: Building Solution; Triggered By Push To feature branch...
-          - task: VsBuild1@1
-            inputs: 
-              solution: $(Solution)
-              msBuildArgs: #'/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${build.artifactstagingdirectory)\\"'
-              platform: 'any cpu'
-              configuration:  'release'
+        displayName: Building Solution; Triggered By Push To feature branch...
+        -task:  VsBuild1@1
+        inputs:
+            solution: $(Solution)
+            msBuildArgs: #'/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${build.artifactstagingdirectory)\\"'
+            platform: 'any cpu'
+            configuration:  'release'
 
-          - task: PublishBuildArtifacts@1
-            inputs:
-              PathToPublish: '$(Build.ArtifactStagingDirectory)' #Declare this variable above
-              ArtifactName: 'drop'
-              publishLocation: 'Container'
+    -task: PublishBuildArtifacts@1
+    inputs:
+        PathToPublish: '$(Build.ArtifactStagingDirectory)' #Declare this variable above
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
   # Stage 1.5 - Execute any DB migration before running Stage 2-Tests
 
   # Stage 2 (Todo: Consider if it would be better to make this another job within Stage 1)
