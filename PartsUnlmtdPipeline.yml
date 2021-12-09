@@ -40,7 +40,7 @@ stages:
         workspace:  
           clean: outputs
         steps:
-          - displayName: Building Solution; Triggered By Push To feature branch...
+          displayName: Building Solution; Triggered By Push To feature branch...
           - task: VsBuild1@1
             inputs: 
               solution: $(Solution)
